@@ -15,6 +15,7 @@ export const chatId = writable('');
 export const chats = writable([]);
 export const tags = writable([]);
 export const models: Writable<Model[]> = writable([]);
+export const starredModels = writable({});
 
 export const modelfiles = writable([]);
 export const prompts: Writable<Prompt[]> = writable([]);

@@ -7,10 +7,12 @@
 	import ChevronDown from '$lib/components/icons/ChevronDown.svelte';
 	import Check from '$lib/components/icons/Check.svelte';
 	import Search from '$lib/components/icons/Search.svelte';
+	import Star from '$lib/components/icons/Star.svelte';
 
 	import { cancelOllamaRequest, deleteModel, getOllamaVersion, pullModel } from '$lib/apis/ollama';
 
-	import { user, MODEL_DOWNLOAD_POOL, models } from '$lib/stores';
+	import { user, MODEL_DOWNLOAD_POOL, models, starredModels } from '$lib/stores';
+	import { writable, derived }  from 'svelte/store';
 	import { toast } from 'svelte-sonner';
 	import { capitalizeFirstLetter, getModels, splitStream } from '$lib/utils';
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
@@ -24,13 +26,49 @@
 	export let searchPlaceholder = 'Search a model';
 
 	export let items = [{ value: 'mango', label: 'Mango' }];
+	starredModels.set({
+    	mango: false,  // Example structure
+	});
 
 	let searchValue = '';
 	let ollamaVersion = null;
 
-	$: filteredItems = searchValue
+	//const sortedItems = derived([items, starredModels], ([$items, $starredModels]) => {
+	//	console.log("Starred Models:", $starredModels);
+    //    return $items.slice().sort((a, b) => {
+    //        const aIsStarred = $starredModels[a.value] === true;
+    //        const bIsStarred = $starredModels[b.value] === true;
+    //        if (aIsStarred && !bIsStarred) {
+    //            return -1; // `a` comes before `b`
+    //        } else if (!aIsStarred && bIsStarred) {
+    //            return 1; // `b` comes before `a`
+    //        }
+    //        return 0; // Maintain original order if both are starred or not starred
+    //    });
+    //});
+
+	$: filteredItems = <butt>
 		? items.filter((item) => item.value.includes(searchValue.toLowerCase()))
 		: items;
+
+	//const combinedItems = derived(
+    //    [items, starredModels, searchValue],
+    //    ([$items, $starredModels, $searchValue]) => {
+	//		console.log("Items:", $items);  // Debugging output
+    //    	console.log("Starred Models:", $starredModels);  // Debugging output
+    //    	console.log("Search Value:", $searchValue);  // Debugging output
+    //        const sortedItems = $items.slice().sort((a, b) => {
+    //            const aIsStarred = $starredModels[a.value] === true;
+    //            const bIsStarred = $starredModels[b.value] === true;
+    //            return (bIsStarred - aIsStarred) || a.label.localeCompare(b.label);
+    //        });
+    //        if ($searchValue) {
+    //            return sortedItems.filter(item => item.value.toLowerCase().includes($searchValue.toLowerCase()));
+    //        }
+	//		console.log("sorted items: " + sortedItems);
+    //        return sortedItems;
+    //    }
+    //);
 
 	const pullModelHandler = async () => {
 		const sanitizedModelTag = searchValue.trim().replace(/^ollama\s+(run|pull)\s+/, '');
@@ -173,6 +211,14 @@
 			toast.success(`${model} download has been canceled`);
 		}
 	};
+
+	function toggleStar(value) {
+        starredModels.update(currentStars => {
+            const newState = { ...currentStars };
+            newState[value] = !newState[value];
+            return newState;
+        });
+    }
 </script>
 
 <Select.Root
@@ -287,6 +333,12 @@
 								<Check />
 							</div>
 						{/if}
+						<button
+							class="ml-auto p-2"
+							on:click|stopPropagation={() => toggleStar(item.value)}
+						>
+							<Star filled={$starredModels[item.value] || false} />
+						</button>
 					</Select.Item>
 				{:else}
 					<div>
